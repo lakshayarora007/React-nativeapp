@@ -2,6 +2,9 @@
 
 A React Native mobile application built using **Expo** that demonstrates authentication flow, dashboard analytics, and data-driven screens using a public REST API.
 
+Expo EAS Update (Live App)
+https://expo.dev/accounts/aroralakshay67/projects/demo-app-pbw7n1pp41rbn07nsx2sr
+
 ---
 
 ## 🚀 Features
@@ -86,6 +89,3 @@ All data is fetched from **DummyJSON API**:
 ```bash
 npm install
 npx expo start
-
-Expo EAS Update (Live App)
-https://expo.dev/accounts/aroralakshay67/projects/demo-app-pbw7n1pp41rbn07nsx2sr
