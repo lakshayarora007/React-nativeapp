@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "myApp",
-    "slug": "myApp",
+    "slug": "demo-app-pbw7n1pp41rbn07nsx2sr",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -43,6 +43,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "428be100-9db3-44c8-8994-c98309fe3365"
+      }
+    },
+    "owner": "aroralakshay67",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/428be100-9db3-44c8-8994-c98309fe3365"
     }
   }
 }
