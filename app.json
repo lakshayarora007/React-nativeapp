@@ -1,13 +1,23 @@
 {
   "expo": {
     "name": "MyApp",
-    "slug": "demo-app-pbw7n1pp41rbn07nsx2sr",
+    "slug": "demo-app",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "sdkVersion": "50.0.0",
+
+    "icon": "./assets/images/icon.png",
+
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
 
     "android": {
-      "package": "com.aroralakshay67.demoapppbw7n1pp41rbn07nsx2sr"
+      "package": "com.aroralakshay67.demoapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#ffffff"
+      }
     },
 
     "extra": {
