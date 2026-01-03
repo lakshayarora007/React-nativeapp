@@ -4,9 +4,12 @@
     "slug": "demo-app-pbw7n1pp41rbn07nsx2sr",
     "version": "1.0.0",
     "orientation": "portrait",
+    "sdkVersion": "50.0.0",
+
     "android": {
       "package": "com.aroralakshay67.demoapppbw7n1pp41rbn07nsx2sr"
     },
+
     "extra": {
       "eas": {
         "projectId": "428be100-9db3-44c8-8994-c98309fe3365"
