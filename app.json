@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MyApp",
-    "slug": "demo-app",
+    "slug": "demo-app-pbw7n1pp41rbn07nsx2sr",
     "version": "1.0.0",
 
     "icon": "./assets/images/icon.png",
@@ -13,7 +13,7 @@
     },
 
     "android": {
-      "package": "com.aroralakshay67.demoapp",
+"package": "com.aroralakshay67.demoapppbw7n1pp41rbn07nsx2sr",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#ffffff"
