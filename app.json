@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "MyApp",
+    "slug": "demo-app-pbw7n1pp41rbn07nsx2sr",
+    "version": "1.0.0",
+    "cli": {
+      "appVersionSource": "app.json"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "428be100-9db3-44c8-8994-c98309fe3365"
+      }
+    },
+    "android": {
+      "package": "com.aroralakshay67.demoapppbw7n1pp41rbn07nsx2sr"
+    }
+  }
+}
