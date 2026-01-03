@@ -31,45 +31,75 @@ export default function Login() {
   const handleLogin = async () => {
     setError('');
 
-    if (!username || !password) {
-      setError('Username aur password required');
+    // Validation
+    if (!username.trim() || !password.trim()) {
+      setError('Username and password are required');
       return;
     }
 
     try {
       setLoading(true);
 
-      const res = await fetch('https://dummyjson.com/auth/login', {
+      // Step 1: Try DummyJSON auth API first
+      const authResponse = await fetch('https://dummyjson.com/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: username.trim(),
           password: password.trim(),
+          expiresInMins: 30,
         }),
       });
 
-      const data = await res.json();
+      const authData = await authResponse.json();
 
-      if (!res.ok || !data.token) {
-        throw new Error('Invalid credentials');
+      // If auth API works, use it
+      if (authResponse.ok && authData.token && authData.id) {
+        await AsyncStorage.setItem('token', authData.token);
+        await AsyncStorage.setItem('userId', String(authData.id));
+        router.replace('/tabs/dashboard');
+        return;
       }
 
-      await AsyncStorage.setItem('token', data.token);
-      await AsyncStorage.setItem('userId', String(data.id));
+      // Step 2: If auth API fails, validate against /users API
+      const usersResponse = await fetch('https://dummyjson.com/users');
+      const usersData = await usersResponse.json();
+      
+      // Find user with matching username
+      const user = usersData.users.find(
+        (u: any) => u.username.toLowerCase() === username.trim().toLowerCase()
+      );
 
-      router.replace('/(tabs)/dashboard');
+      if (!user) {
+        throw new Error('User not found. Please check username.');
+      }
 
-    } catch (err) {
-      setError('Login failed. Dummy API may reject credentials.');
+      // Validate password (in real app, password would be hashed)
+      // For demo, we'll check if password matches user's password field
+      if (user.password !== password.trim()) {
+        throw new Error('Invalid password');
+      }
+
+      // Create a mock token and store user data
+      const mockToken = `mock_token_${user.id}_${Date.now()}`;
+      await AsyncStorage.setItem('token', mockToken);
+      await AsyncStorage.setItem('userId', String(user.id));
+      await AsyncStorage.setItem('userData', JSON.stringify(user));
+
+      router.replace('/tabs/dashboard');
+
+    } catch (err: any) {
+      console.log('Login error:', err);
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 🟡 DEMO LOGIN
-  const handleDemoLogin = async () => {
-    await AsyncStorage.clear();
-    router.replace('/dashboard');
+  // Quick fill credentials for testing
+  const fillTestCredentials = () => {
+    setUsername('emilys');
+    setPassword('emilyspass');
   };
 
   return (
@@ -77,9 +107,13 @@ export default function Login() {
       <View style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.heading}>Welcome Back 👋</Text>
-          <Text style={styles.sub}>Login to continue</Text>
+          <Text style={styles.sub}>Login to your account</Text>
 
-          {error !== '' && <Text style={styles.error}>{error}</Text>}
+          {error !== '' && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
 
           <TextInput
             placeholder="Username"
@@ -87,6 +121,7 @@ export default function Login() {
             onChangeText={setUsername}
             autoCapitalize="none"
             style={styles.input}
+            editable={!loading}
           />
 
           <TextInput
@@ -95,6 +130,7 @@ export default function Login() {
             onChangeText={setPassword}
             secureTextEntry
             style={styles.input}
+            editable={!loading}
           />
 
           {/* LOGIN BUTTON */}
@@ -110,16 +146,18 @@ export default function Login() {
             )}
           </Pressable>
 
-          {/* DEMO BUTTON */}
+          {/* TEST CREDENTIALS BUTTON */}
           <Pressable
             style={styles.demoButton}
-            onPress={handleDemoLogin}
+            onPress={fillTestCredentials}
+            disabled={loading}
           >
-            <Text style={styles.demoText}>Continue as Demo</Text>
+            <Text style={styles.demoText}>Use Test Credentials</Text>
           </Pressable>
 
           <Text style={styles.helper}>
-            DummyJSON auth unstable — demo mode recommended
+            Any user from dummyjson.com/users works!{'\n'}
+            Try: emilys / emilyspass
           </Text>
         </View>
       </View>
@@ -152,22 +190,29 @@ const styles = StyleSheet.create({
   sub: {
     color: COLORS.muted,
     marginBottom: 20,
+    fontSize: 14,
   },
-  error: {
+  errorBox: {
+    backgroundColor: '#fee2e2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  errorText: {
     color: COLORS.danger,
-    marginBottom: 10,
     fontSize: 13,
   },
   input: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    padding: 12,
+    padding: 14,
     borderRadius: 10,
     marginBottom: 12,
+    fontSize: 15,
   },
   button: {
     backgroundColor: COLORS.primary,
-    padding: 14,
+    padding: 16,
     borderRadius: 10,
     marginTop: 6,
   },
@@ -175,11 +220,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     textAlign: 'center',
+    fontSize: 16,
   },
   demoButton: {
     borderWidth: 1,
     borderColor: COLORS.primary,
-    padding: 12,
+    padding: 14,
     borderRadius: 10,
     marginTop: 12,
   },
@@ -193,5 +239,6 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     textAlign: 'center',
     marginTop: 12,
+    lineHeight: 18,
   },
 });

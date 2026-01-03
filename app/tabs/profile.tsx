@@ -5,13 +5,12 @@ import {
   Image,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const DEMO_MODE = true;
 
 const COLORS = {
   primary: '#2563eb',
@@ -37,30 +36,76 @@ export default function Profile() {
     try {
       const token = await AsyncStorage.getItem('token');
 
-      if (token) {
-        const res = await fetch('https://dummyjson.com/auth/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setUser(data);
+      if (!token) {
+        router.replace('/login');
         return;
       }
 
-      if (DEMO_MODE) {
-        const res = await fetch('https://dummyjson.com/users/1');
-        const data = await res.json();
-        setUser(data);
+      let userData;
+
+      // Try auth/me API first
+      try {
+        const res = await fetch('https://dummyjson.com/auth/me', {
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        });
+
+        if (res.ok) {
+          userData = await res.json();
+        }
+      } catch (authError) {
+        console.log('Auth API failed');
       }
+
+      // If auth fails, use stored user data
+      if (!userData) {
+        const storedUser = await AsyncStorage.getItem('userData');
+        if (storedUser) {
+          userData = JSON.parse(storedUser);
+        } else {
+          // Fallback: fetch by user ID
+          const userId = await AsyncStorage.getItem('userId');
+          if (userId) {
+            const res = await fetch(`https://dummyjson.com/users/${userId}`);
+            userData = await res.json();
+          }
+        }
+      }
+
+      if (!userData) {
+        throw new Error('No user data');
+      }
+
+      setUser(userData);
+
     } catch (err) {
       console.log('Profile error', err);
+      await AsyncStorage.clear();
+      router.replace('/login');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await AsyncStorage.clear();
-    router.replace('/login');
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.clear();
+            router.replace('/login');
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -78,19 +123,32 @@ export default function Profile() {
               {user.firstName} {user.lastName}
             </Text>
             <Text style={styles.email}>{user.email}</Text>
-
-            {DEMO_MODE && <Text style={styles.badge}>Demo Account</Text>}
           </View>
 
           {/* INFO CARD */}
           <View style={styles.card}>
-            <Info label="Username" value={user.username} />
-            <Info label="Phone" value={user.phone} />
-            <Info label="Age" value={String(user.age)} />
-            <Info label="Gender" value={user.gender} />
+            <InfoRow label="Username" value={user.username} />
+            <InfoRow label="Phone" value={user.phone} />
+            <InfoRow label="Age" value={String(user.age)} />
+            <InfoRow label="Gender" value={user.gender} />
+            <InfoRow label="Birth Date" value={user.birthDate} />
+            <InfoRow label="Blood Group" value={user.bloodGroup} />
           </View>
 
-          {/* LOGOUT */}
+          {/* ADDRESS CARD */}
+          {user.address && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Address</Text>
+              <Text style={styles.addressText}>
+                {user.address.address}, {user.address.city}
+              </Text>
+              <Text style={styles.addressText}>
+                {user.address.state} - {user.address.postalCode}
+              </Text>
+            </View>
+          )}
+
+          {/* LOGOUT BUTTON */}
           <Pressable style={styles.logout} onPress={handleLogout}>
             <Text style={styles.logoutText}>Logout</Text>
           </Pressable>
@@ -100,8 +158,8 @@ export default function Profile() {
   );
 }
 
-/* 🔹 Reusable Row */
-const Info = ({ label, value }: any) => (
+/* Reusable Row Component */
+const InfoRow = ({ label, value }: any) => (
   <View style={styles.row}>
     <Text style={styles.label}>{label}</Text>
     <Text style={styles.value}>{value}</Text>
@@ -131,60 +189,70 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 10,
-    borderWidth: 3,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 12,
+    borderWidth: 4,
     borderColor: COLORS.primary,
   },
   name: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     color: COLORS.text,
   },
   email: {
     color: COLORS.muted,
     marginTop: 4,
-  },
-  badge: {
-    marginTop: 10,
-    backgroundColor: COLORS.primary,
-    color: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    fontSize: 12,
+    fontSize: 14,
   },
 
   card: {
     backgroundColor: COLORS.card,
     borderRadius: 14,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
   },
   label: {
     color: COLORS.muted,
     fontWeight: '500',
+    fontSize: 14,
   },
   value: {
     color: COLORS.text,
     fontWeight: '600',
+    fontSize: 14,
+  },
+  addressText: {
+    color: COLORS.text,
+    fontSize: 14,
+    marginBottom: 4,
   },
 
   logout: {
     backgroundColor: COLORS.danger,
-    padding: 14,
+    padding: 16,
     borderRadius: 10,
+    marginTop: 10,
   },
   logoutText: {
     color: '#fff',
     textAlign: 'center',
     fontWeight: '700',
+    fontSize: 16,
   },
 });

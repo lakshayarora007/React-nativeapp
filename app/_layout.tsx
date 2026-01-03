@@ -17,7 +17,7 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
 
         {/* Tabs */}
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="tabs" />
       </Stack>
     </>
   );

@@ -5,6 +5,7 @@ import {
   Image,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +22,7 @@ const COLORS = {
 export default function Products() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -28,14 +30,20 @@ export default function Products() {
 
   const loadProducts = async () => {
     try {
-      const res = await fetch('https://dummyjson.com/products?limit=10');
+      const res = await fetch('https://dummyjson.com/products?limit=20');
       const data = await res.json();
-      setProducts(data.products);
+      setProducts(data.products || []);
     } catch (e) {
       console.log('Products error', e);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadProducts();
   };
 
   return (
@@ -45,34 +53,49 @@ export default function Products() {
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       ) : (
-        <FlatList
-          data={products}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.container}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              {/* IMAGE */}
-              <Image source={{ uri: item.thumbnail }} style={styles.image} />
+        <>
+          <View style={styles.header}>
+            <Text style={styles.title}>Products</Text>
+            <Text style={styles.subtitle}>{products.length} items available</Text>
+          </View>
 
-              {/* INFO */}
-              <View style={styles.info}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {item.title}
-                </Text>
+          <FlatList
+            data={products}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.container}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            renderItem={({ item }) => (
+              <View style={styles.card}>
+                {/* IMAGE */}
+                <Image source={{ uri: item.thumbnail }} style={styles.image} />
 
-                <Text style={styles.brand}>{item.brand}</Text>
+                {/* INFO */}
+                <View style={styles.info}>
+                  <Text style={styles.productTitle} numberOfLines={2}>
+                    {item.title}
+                  </Text>
 
-                <View style={styles.row}>
-                  <Text style={styles.price}>₹ {item.price}</Text>
+                  <Text style={styles.brand}>{item.brand}</Text>
 
-                  <View style={styles.rating}>
-                    <Text style={styles.ratingText}>★ {item.rating}</Text>
+                  <View style={styles.row}>
+                    <Text style={styles.price}>${item.price}</Text>
+
+                    <View style={styles.rating}>
+                      <Text style={styles.ratingText}>★ {item.rating.toFixed(1)}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
-          )}
-        />
+            )}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Text style={styles.emptyText}>No products found</Text>
+              </View>
+            }
+          />
+        </>
       )}
     </SafeAreaView>
   );
@@ -83,13 +106,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.secondary,
   },
-  container: {
-    padding: 16,
-  },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  header: {
+    backgroundColor: COLORS.card,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.muted,
+    marginTop: 4,
+  },
+
+  container: {
+    padding: 16,
   },
   card: {
     flexDirection: 'row',
@@ -97,7 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 12,
     marginBottom: 14,
-    elevation: 4,
+    elevation: 2,
   },
   image: {
     width: 90,
@@ -109,8 +150,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
-  title: {
-    fontSize: 16,
+  productTitle: {
+    fontSize: 15,
     fontWeight: '700',
     color: COLORS.text,
   },
@@ -125,7 +166,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   price: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: COLORS.primary,
   },
@@ -139,5 +180,14 @@ const styles = StyleSheet.create({
     color: COLORS.success,
     fontWeight: '600',
     fontSize: 12,
+  },
+
+  empty: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: COLORS.muted,
   },
 });

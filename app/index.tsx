@@ -23,7 +23,7 @@ export default function Splash() {
 
       setTimeout(() => {
         if (token) {
-          router.replace('/(tabs)/dashboard');
+          router.replace('/tabs/dashboard');
 
         } else {
           router.replace('/login');
